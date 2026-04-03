@@ -1152,9 +1152,16 @@ body {
     <div class="sheet-handle"></div>
     <div class="sheet-title" id="place-sheet-title">新增景點</div>
     <div class="form-group"><label class="form-label">景點名稱 *</label><input class="form-input" id="fp-name" placeholder="例如：益善洞韓屋村"/></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">類別</label><select class="form-select" id="fp-cat"><option>景點</option><option>美食</option><option>咖啡廳</option><option>購物</option><option>其他</option></select></div>
-      <div class="form-group"><label class="form-label">Emoji</label><input class="form-input" id="fp-emoji" placeholder="🏯" maxlength="4" style="text-align:center;font-size:18px;"/></div>
+    <div class="form-group"><label class="form-label">類別</label><select class="form-select" id="fp-cat"><option>景點</option><option>美食</option><option>咖啡廳</option><option>購物</option><option>其他</option></select></div>
+    <div class="form-group">
+      <label class="form-label">📸 景點封面照片</label>
+      <input type="file" id="fp-photo-input" accept="image/*" style="display:none" onchange="handlePlacePhotoUpload(event)"/>
+      <div id="fp-photo-area">
+        <div class="photo-upload-area" onclick="document.getElementById('fp-photo-input').click()">
+          <div class="photo-upload-icon">🖼️</div>
+          <div class="photo-upload-txt">點擊上傳景點照片</div>
+        </div>
+      </div>
     </div>
     <div class="form-group"><label class="form-label">簡介</label><textarea class="form-textarea" id="fp-desc" placeholder="這個地方有什麼特色？"></textarea></div>
     <div class="form-group"><label class="form-label">📍 地址（貼韓文最準）</label><input class="form-input" id="fp-address" placeholder="서울 마포구 홍대"/></div>
@@ -1162,7 +1169,7 @@ body {
     <div class="form-group"><label class="form-label">🚇 捷運 & 出口</label><input class="form-input" id="fp-transit" placeholder="2號線 홍대입구역 9號出口，步行5分鐘"/></div>
     <div class="form-group"><label class="form-label">🎬 參考影片連結</label><input class="form-input" id="fp-video" placeholder="https://youtube.com/…" type="url"/></div>
     <div class="form-group"><label class="form-label">📸 Instagram 連結</label><input class="form-input" id="fp-ig" placeholder="https://www.instagram.com/p/…"/></div>
-    <div class="form-group"><label class="form-label">🖼️ 地圖標記圖片網址（貼 IG / 網路圖片）</label><input class="form-input" id="fp-img" placeholder="https://images.unsplash.com/…"/></div>
+
     <div class="form-group"><label class="form-label">💡 小提醒</label><input class="form-input" id="fp-tip" placeholder="假日人多，建議早上去"/></div>
     <div class="sheet-actions">
       <button class="sheet-cancel" onclick="closeOv('ov-place')">取消</button>
@@ -1545,6 +1552,46 @@ const isUrl=s=>{try{new URL(s);return true;}catch{return false;}};
 const esc=s=>s.replace(/'/g,"\\'");
 
 // ════════════════════════════════════
+// PLACE PHOTO UPLOAD
+// ════════════════════════════════════
+let currentPlacePhoto = '';
+
+function handlePlacePhotoUpload(evt) {
+  const file = evt.target.files[0]; if (!file) return;
+  // Resize to max 800px to keep Firebase data small
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxW = 800, maxH = 600;
+      let w = img.width, h = img.height;
+      if (w > maxW) { h = h * maxW / w; w = maxW; }
+      if (h > maxH) { w = w * maxH / h; h = maxH; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      currentPlacePhoto = canvas.toDataURL('image/jpeg', 0.75);
+      document.getElementById('fp-photo-area').innerHTML = `
+        <img class="photo-preview" src="${currentPlacePhoto}" alt="景點照片" style="max-height:160px;"/>
+        <button class="photo-remove-btn" onclick="resetPlacePhoto()">✕ 移除照片</button>`;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetPlacePhoto() {
+  currentPlacePhoto = '';
+  document.getElementById('fp-photo-area').innerHTML = `
+    <div class="photo-upload-area" onclick="document.getElementById('fp-photo-input').click()">
+      <div class="photo-upload-icon">🖼️</div>
+      <div class="photo-upload-txt">點擊上傳景點照片</div>
+    </div>`;
+  const inp = document.getElementById('fp-photo-input');
+  if(inp) inp.value = '';
+}
+
+// ════════════════════════════════════
 // PLACES
 // ════════════════════════════════════
 function renderPlaces(){
@@ -1556,20 +1603,31 @@ function renderPlaces(){
   }
   list.innerHTML=filtered.map(p=>`
     <div class="pcard">
-      <div class="pcard-top">
-        <div class="pcard-row1">
-          <div class="pcard-emoji">${p.emoji||catEmoji(p.cat)}</div>
-          <div class="pcard-info">
-            <div class="pcard-name">${p.name}</div>
-            <div class="pcard-cat ${p.cat}">${p.cat}</div>
+      ${p.img ? `
+        <div style="position:relative;">
+          <img src="${p.img}" style="width:100%;height:180px;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'"/>
+          <div style="position:absolute;top:10px;right:10px;display:flex;gap:6px;">
+            <button class="pcard-ic" style="background:rgba(10,10,15,0.75);backdrop-filter:blur(8px);" onclick="openPlaceModal('${esc(p.id)}')">✏️</button>
+            <button class="pcard-ic del" style="background:rgba(196,91,58,0.75);backdrop-filter:blur(8px);" onclick="delPlace('${esc(p.id)}')">🗑️</button>
           </div>
-          <div class="pcard-actions">
-            <button class="pcard-ic" onclick="openPlaceModal('${esc(p.id)}')">✏️</button>
-            <button class="pcard-ic del" onclick="delPlace('${esc(p.id)}')">🗑️</button>
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 14px;background:linear-gradient(transparent,rgba(10,10,15,0.9));">
+            <div class="pcard-name" style="color:white;">${p.name}</div>
+            <div class="pcard-cat ${p.cat}" style="margin-top:3px;">${p.cat}</div>
           </div>
-        </div>
-      </div>
-      ${p.img?`<img src="${p.img}" style="width:100%;height:140px;object-fit:cover;border-radius:12px;margin:8px 0;" onerror="this.style.display='none'"/>`:''}
+        </div>` : `
+        <div class="pcard-top">
+          <div class="pcard-row1">
+            <div style="width:52px;height:52px;border-radius:12px;background:var(--bg3);border:1px dashed var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;font-size:13px;color:var(--text3);" onclick="openPlaceModal('${esc(p.id)}')">📷</div>
+            <div class="pcard-info">
+              <div class="pcard-name">${p.name}</div>
+              <div class="pcard-cat ${p.cat}">${p.cat}</div>
+            </div>
+            <div class="pcard-actions">
+              <button class="pcard-ic" onclick="openPlaceModal('${esc(p.id)}')">✏️</button>
+              <button class="pcard-ic del" onclick="delPlace('${esc(p.id)}')">🗑️</button>
+            </div>
+          </div>
+        </div>`}
       ${p.desc?`<div class="pcard-desc">${p.desc}</div>`:''}
       <div class="pcard-meta">
         ${p.hours?`<div class="pcard-meta-row"><span class="pcard-meta-icon">🕐</span><span class="pcard-meta-txt">${p.hours}</span></div>`:''}
@@ -1594,7 +1652,16 @@ function filterPlaces(cat,el){
 function openPlaceModal(id=null){
   editPlaceId=id; const p=id?places.find(x=>x.id===id):null;
   document.getElementById('place-sheet-title').textContent=id?'編輯景點':'新增景點';
-  ['name','emoji','desc','address','hours','transit','video','tip','ig','img'].forEach(k=>document.getElementById('fp-'+k).value=p?.[k]||'');
+  ['name','desc','address','hours','transit','video','tip','ig'].forEach(k=>document.getElementById('fp-'+k).value=p?.[k]||'');
+  // Load photo preview
+  currentPlacePhoto = p?.img || '';
+  if(currentPlacePhoto){
+    document.getElementById('fp-photo-area').innerHTML = `
+      <img class="photo-preview" src="${currentPlacePhoto}" alt="景點照片"/>
+      <button class="photo-remove-btn" onclick="resetPlacePhoto()">✕ 移除照片</button>`;
+  } else {
+    resetPlacePhoto();
+  }
   document.getElementById('fp-cat').value=p?.cat||'景點';
   document.getElementById('ov-place').classList.add('show');
 }
@@ -1602,7 +1669,7 @@ function openPlaceModal(id=null){
 async function savePlace(){
   const name=document.getElementById('fp-name').value.trim();
   if(!name){alert('請輸入景點名稱！');return;}
-  const data={name,cat:document.getElementById('fp-cat').value,emoji:document.getElementById('fp-emoji').value.trim(),desc:document.getElementById('fp-desc').value.trim(),address:document.getElementById('fp-address').value.trim(),hours:document.getElementById('fp-hours').value.trim(),transit:document.getElementById('fp-transit').value.trim(),video:document.getElementById('fp-video').value.trim(),tip:document.getElementById('fp-tip').value.trim(),ig:document.getElementById('fp-ig').value.trim(),img:document.getElementById('fp-img').value.trim()};
+  const data={name,cat:document.getElementById('fp-cat').value,emoji:'',desc:document.getElementById('fp-desc').value.trim(),address:document.getElementById('fp-address').value.trim(),hours:document.getElementById('fp-hours').value.trim(),transit:document.getElementById('fp-transit').value.trim(),video:document.getElementById('fp-video').value.trim(),tip:document.getElementById('fp-tip').value.trim(),ig:document.getElementById('fp-ig').value.trim(),img:currentPlacePhoto};
   if(editPlaceId){const i=places.findIndex(x=>x.id===editPlaceId);if(i!==-1)places[i]={...places[i],...data};}
   else places.push({id:'p'+(nid++),...data});
   closeOv('ov-place'); renderPlaces(); await saveCloud();
