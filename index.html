@@ -57,21 +57,23 @@ body {
 /* ── BOTTOM NAV ─────────────────────────────── */
 .bottom-nav {
   position:fixed; bottom:0; left:0; right:0; z-index:200;
-  background: rgba(10,10,15,0.85);
+  background: rgba(10,10,15,0.92);
   backdrop-filter: blur(24px) saturate(1.8);
   -webkit-backdrop-filter: blur(24px) saturate(1.8);
   border-top: 1px solid var(--border);
-  display:flex;
-  padding: 10px 0 calc(10px + var(--safe-bottom));
+  display:flex; overflow-x:auto; scrollbar-width:none;
+  padding: 8px 0 calc(8px + var(--safe-bottom));
+  -webkit-overflow-scrolling:touch;
 }
+.bottom-nav::-webkit-scrollbar { display:none; }
 .nav-btn {
-  flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+  flex:0 0 calc(100%/6); display:flex; flex-direction:column; align-items:center; gap:2px;
   border:none; background:none; cursor:pointer; color:var(--text3);
-  font-family:inherit; padding:4px 0; transition: color .2s;
+  font-family:inherit; padding:3px 4px; transition: color .2s; min-width:52px;
 }
 .nav-btn.active { color: var(--gold); }
-.nav-icon { font-size:20px; line-height:1; }
-.nav-label { font-size:9px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; }
+.nav-icon { font-size:18px; line-height:1; }
+.nav-label { font-size:8px; font-weight:600; letter-spacing:.3px; text-transform:uppercase; white-space:nowrap; }
 
 /* ── HERO ────────────────────────────────────── */
 .hero {
@@ -2289,6 +2291,17 @@ async function init(){
   setInterval(updateClocks,1000); setInterval(updateCountdown,60000);
   fetchWeather(); setInterval(fetchWeather,600000);
   await loadCloud();
+  // If no data in Firebase yet, seed defaults and save
+  if(places.length === 0){
+    places = JSON.parse(JSON.stringify(DEF_PLACES));
+    plan = JSON.parse(JSON.stringify(DEF_PLAN));
+    await saveCloud();
+  }
+  initChecklist();
+  if(checkItems.length === 0){
+    DEF_CHECK_GROUPS.forEach(g => g.items.forEach(i => checkItems.push({...i, group: g.group})));
+    await saveCloud();
+  }
   renderPlaces(); renderPlan();
   document.getElementById('loading').style.display='none';
   showPage('home');
