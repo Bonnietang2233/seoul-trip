@@ -1605,14 +1605,18 @@ function renderPlaces(){
     <div class="pcard">
       ${p.img ? `
         <div style="position:relative;">
-          <img src="${p.img}" style="width:100%;height:120px;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'"/>
+          <img src="${p.img}" style="width:100%;height:100px;object-fit:cover;display:block;border-radius:var(--r) var(--r) 0 0;" onerror="this.parentElement.style.display='none'"/>
           <div style="position:absolute;top:10px;right:10px;display:flex;gap:6px;">
             <button class="pcard-ic" style="background:rgba(10,10,15,0.75);backdrop-filter:blur(8px);" onclick="openPlaceModal('${esc(p.id)}')">✏️</button>
             <button class="pcard-ic del" style="background:rgba(196,91,58,0.75);backdrop-filter:blur(8px);" onclick="delPlace('${esc(p.id)}')">🗑️</button>
           </div>
-          <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 14px;background:linear-gradient(transparent,rgba(10,10,15,0.9));">
-            <div class="pcard-name" style="color:white;">${p.name}</div>
-            <div class="pcard-cat ${p.cat}" style="margin-top:3px;">${p.cat}</div>
+        </div>
+        <div style="padding:10px 14px 0;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+            <div>
+              <div class="pcard-name">${p.name}</div>
+              <div class="pcard-cat ${p.cat}" style="margin-top:3px;">${p.cat}</div>
+            </div>
           </div>
         </div>` : `
         <div class="pcard-top">
@@ -1635,9 +1639,9 @@ function renderPlaces(){
       ${p.transit?`<div class="pcard-transit"><span class="pcard-transit-icon">🚇</span><span class="pcard-transit-txt">${p.transit}</span></div>`:''}
       ${p.tip?`<div class="pcard-tip">💡 ${p.tip}</div>`:''}
       ${(p.ig&&isUrl(p.ig))||(p.video&&isUrl(p.video)) ? `
-      <div style="padding:0 16px 12px;display:flex;gap:8px;flex-wrap:wrap;">
-        ${p.ig&&isUrl(p.ig)?`<a href="${p.ig}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,rgba(240,148,51,.15),rgba(188,24,136,.15));border:1px solid rgba(188,24,136,.25);color:#E8856A;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:600;text-decoration:none;">📸 Instagram</a>`:''}
-        ${p.video&&isUrl(p.video)?`<a href="${p.video}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:rgba(196,91,58,.12);border:1px solid rgba(196,91,58,.25);color:#E8856A;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:600;text-decoration:none;">▶️ 參考影片</a>`:''}
+      <div style="padding:6px 14px 2px;display:flex;gap:7px;flex-wrap:wrap;">
+        ${p.ig&&isUrl(p.ig)?`<a href="${p.ig}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,rgba(240,148,51,.15),rgba(188,24,136,.15));border:1px solid rgba(188,24,136,.25);color:#E8856A;border-radius:100px;padding:6px 12px;font-size:11px;font-weight:700;text-decoration:none;-webkit-touch-callout:none;">📸 IG</a>`:''}
+        ${p.video&&isUrl(p.video)?`<a href="${p.video}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;background:rgba(196,91,58,.12);border:1px solid rgba(196,91,58,.25);color:#E8856A;border-radius:100px;padding:6px 12px;font-size:11px;font-weight:700;text-decoration:none;-webkit-touch-callout:none;">▶️ 影片</a>`:''}
       </div>` : ''}
       <div class="pcard-footer">
         <button class="pcard-nav-btn" onclick="openNav('${esc(p.address)}','${esc(p.name)}')">📍 導航</button>
