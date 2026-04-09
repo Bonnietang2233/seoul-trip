@@ -813,6 +813,75 @@ body {
 .photo-preview{width:100%;max-height:180px;object-fit:cover;border-radius:10px;display:block;}
 .photo-remove-btn{width:100%;background:var(--rust-dim);border:none;border-radius:8px;padding:8px;font-size:12px;color:#E8856A;cursor:pointer;font-family:inherit;margin-top:6px;}
 
+
+/* ── MEMO ────────────────────────────────────── */
+.memo-overlay {
+  position:fixed; inset:0; z-index:500;
+  background:var(--bg); display:none;
+  flex-direction:column;
+}
+.memo-overlay.show { display:flex; }
+.memo-header {
+  display:flex; align-items:center; gap:12px;
+  padding:calc(54px + var(--safe-top)) 18px 14px;
+  background:var(--bg2); border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.memo-back {
+  background:var(--surface); border:none; color:var(--text);
+  border-radius:10px; width:36px; height:36px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; cursor:pointer; flex-shrink:0;
+}
+.memo-title { font-family:'DM Serif Display',serif; font-size:18px; flex:1; min-width:0; }
+.memo-save-btn {
+  background:var(--gold); color:#0A0A0F; border:none;
+  border-radius:10px; padding:8px 16px; font-size:12px;
+  font-weight:700; cursor:pointer; font-family:inherit; flex-shrink:0;
+}
+.memo-body { flex:1; overflow-y:auto; padding:18px; }
+.memo-section { margin-bottom:20px; }
+.memo-section-title {
+  font-size:9px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--text3); font-weight:600; margin-bottom:8px;
+}
+.memo-textarea {
+  width:100%; background:var(--bg2); border:1px solid var(--border2);
+  border-radius:12px; padding:13px 14px; font-size:14px;
+  font-family:inherit; color:var(--text); outline:none;
+  resize:none; line-height:1.7; min-height:120px;
+  transition:border-color .2s;
+}
+.memo-textarea:focus { border-color:var(--gold); }
+.memo-link-list { display:flex; flex-direction:column; gap:8px; }
+.memo-link-item {
+  display:flex; align-items:center; gap:8px;
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:12px; padding:11px 13px;
+}
+.memo-link-icon { font-size:16px; flex-shrink:0; }
+.memo-link-info { flex:1; min-width:0; }
+.memo-link-label { font-size:12px; font-weight:600; color:var(--text); }
+.memo-link-url { font-size:11px; color:var(--text3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.memo-link-open {
+  background:var(--gold-dim); border:1px solid rgba(201,168,76,.3);
+  color:var(--gold); border-radius:8px; padding:5px 10px;
+  font-size:11px; font-weight:700; cursor:pointer; text-decoration:none;
+  flex-shrink:0;
+}
+.memo-add-link {
+  display:flex; align-items:center; justify-content:center; gap:5px;
+  background:transparent; border:1px dashed var(--border2);
+  border-radius:12px; padding:11px; font-size:13px;
+  color:var(--text3); cursor:pointer; width:100%;
+  font-family:inherit; margin-top:4px;
+}
+.memo-add-link:active { border-color:var(--gold); color:var(--gold); }
+.memo-empty {
+  text-align:center; padding:40px 20px;
+  color:var(--text3); font-size:13px; line-height:1.9;
+}
+
 .loading-screen {
   position:fixed; inset:0; background:var(--bg); z-index:999;
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
@@ -1004,7 +1073,7 @@ body {
     <div class="sec-hd-sub">Accommodation</div>
   </div>
   <div class="hotel-card" style="margin:0 20px 0;">
-    <div class="hotel-hero-placeholder">🏘️ 🌸 🌃</div>
+    <div style="width:100%;height:100px;background:linear-gradient(135deg,#1A1A2E 0%,#2D3561 50%,#1A1F3A 100%);display:flex;align-items:center;justify-content:center;"><span style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:3px;text-transform:uppercase;">Hongdae · Seoul</span></div>
     <div class="hotel-body">
       <div class="hotel-name">弘大整棟 Airbnb</div>
       <div class="hotel-rating">
@@ -1134,6 +1203,47 @@ body {
     <div class="check-sub">點勾選 ✓ ｜長按可刪除</div>
   </div>
   <div class="check-groups" id="check-groups"></div>
+</div>
+
+<!-- ══ MEMO OVERLAY ════════════════════════════ -->
+<div class="memo-overlay" id="memo-overlay">
+  <div class="memo-header">
+    <button class="memo-back" onclick="closeMemo()">←</button>
+    <div class="memo-title" id="memo-place-name"></div>
+    <button class="memo-save-btn" onclick="saveMemo()">儲存</button>
+  </div>
+  <div class="memo-body">
+    <div class="memo-section">
+      <div class="memo-section-title">📝 備忘錄</div>
+      <textarea class="memo-textarea" id="memo-text" placeholder="訂票資訊、注意事項、官網連結、任何你想記的…&#10;&#10;例如：&#10;- 需要提前預約&#10;- 官網：https://…&#10;- 票價：大人 ₩15,000"></textarea>
+    </div>
+
+    <div class="memo-section">
+      <div class="memo-section-title">🔗 快速連結</div>
+      <div class="memo-link-list" id="memo-link-list"></div>
+      <button class="memo-add-link" onclick="openAddLinkSheet()">＋ 新增連結</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OVERLAY: ADD LINK ════════════════════════ -->
+<div class="overlay" id="ov-addlink" onclick="handleOv(event,'ov-addlink')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">新增連結</div>
+    <div class="form-group">
+      <label class="form-label">名稱</label>
+      <input class="form-input" id="fl-label" placeholder="例如：官方網站、訂票連結、Google Maps"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">網址 *</label>
+      <input class="form-input" id="fl-url" placeholder="https://…" type="url"/>
+    </div>
+    <div class="sheet-actions">
+      <button class="sheet-cancel" onclick="closeOv('ov-addlink')">取消</button>
+      <button class="sheet-save" onclick="saveLink()">新增</button>
+    </div>
+  </div>
 </div>
 
 <!-- BOTTOM NAV -->
@@ -1360,7 +1470,8 @@ const DEF_PLACES = [
 const DEF_PLAN = [
   [{id:'e1',name:'✈️ 台北松山起飛',time:'09:25',desc:'CI260，直飛首爾金浦',address:'台北松山機場',link:'',note:'起飛前2小時到機場報到！'},{id:'e2',name:'🛬 抵達首爾金浦',time:'12:55',desc:'辦理入境後搭地鐵到弘大，約20分鐘',address:'서울 강서구 하늘길 38',link:'',note:''},{id:'e3',name:'🏠 辦理入住',time:'14:30',desc:'弘大站步行5分鐘到住宿，放行李休息',address:'서울 마포구 홍대입구역',link:'',note:''},{id:'e4',name:'🚶 弘大輕鬆探索',time:'16:00',desc:'逛逛弘大街區，感受首爾氣氛，吃個晚餐',address:'서울 마포구 홍대',link:'',note:'第一天不要排太滿！'}],
   [{id:'e5',name:'🏯 景福宮',time:'09:00',desc:'穿韓服免費入場，觀看衛兵交接儀式',address:'서울 종로구 사직로 161',link:'',note:'週一正常，週二公休！'},{id:'e6',name:'🏘️ 北村韓屋村',time:'11:00',desc:'傳統韓屋巷弄，超好拍，保持安靜',address:'서울 종로구 계동길',link:'',note:''},{id:'e7',name:'🍜 仁寺洞逛街',time:'13:00',desc:'傳統文化街，買伴手禮、吃韓國傳統小吃',address:'서울 종로구 인사동',link:'',note:''},{id:'e8',name:'🍖 韓式烤肉晚餐',time:'18:00',desc:'找一間正統烤肉好好吃一頓',address:'',link:'',note:''}],
-  [{id:'e9',name:'🥘 廣藏市場',time:'10:00',desc:'必吃綠豆煎餅、紫菜飯捲、麻花甜甜圈',address:'서울 종로구 창경궁로 88',link:'',note:'麻花甜甜圈要排隊，值得！'},{id:'e10',name:'💄 明洞購物',time:'13:30',desc:'Olive Young 掃貨！記得帶護照退稅',address:'서울 중구 명동',link:'',note:'超過3萬韓元可退稅 💸'},{id:'e11',name:'🌃 明洞夜市',time:'18:00',desc:'雞蛋糕、炒年糕、韓式串串都要試',address:'서울 중구 명동길',link:'',note:''}],
+  [{id:'e9',name:'🥘 廣藏市場',time:'10:00',desc:'必吃綠豆煎餅、紫菜飯捲、麻花甜甜圈',address:'서울 종로구 창경궁로 88',link:'',note:'麻花甜甜圈要排隊，值得！'},{id:'e9b',name:'🛩️ Skynuri 飛行體驗',time:'13:30',desc:'A Course 20分鐘體驗飛行 × 2人，HLC220 & HLC260，$160 USD',address:'Hwaseong Airfield, Gyeonggi-do, South Korea',link:'https://skynuri.kr/about/training',note:'⚠️ 從首爾市區車程約1小時，記得提早出發！聯絡：+82-31-351-9728'},{id:'e10',name:'💄 明洞購物',time:'13:30',desc:'Olive Young 掃貨！記得帶護照退稅',address:'서울 중구 명동',link:'',note:'超過3萬韓元可退稅 💸'},{id:'e11',name:'🌃 明洞夜市',time:'18:00',desc:'雞蛋糕、炒年糕、韓式串串都要試',address:'서울 중구 명동길',link:'',note:''},
+  {id:'e20',name:'✈️ Skynuri 飛行學校體驗',time:'14:00',desc:'在首爾體驗開真實飛機！A課程20分鐘$80、B課程35分鐘$150、C課程65分鐘$280',address:'경기도 화성시 스카이누리',link:'https://skynuri.kr/about/training',note:'記得提前預約！可選A/B/C不同時長課程 🛩️'}],
   [{id:'e12',name:'☕ 聖水洞咖啡街',time:'10:00',desc:'Cafe Onion 肉桂捲必去！每間都超有特色',address:'서울 성동구 성수이로',link:'',note:''},{id:'e13',name:'🏬 Starfield COEX',time:'14:00',desc:'圖書館必拍，@Arabica咖啡在2樓',address:'서울 강남구 영동대로 513',link:'',note:''},{id:'e14',name:'🛍️ Gotomall地下購城',time:'16:30',desc:'平價女裝天堂！記得帶現金',address:'서울 서초구 신반포로 194',link:'',note:'部分攤位只收現金'}],
   [{id:'e15',name:'🛍️ 弘大最後採購',time:'10:00',desc:'最後機會買紀念品和零食！',address:'서울 마포구 홍대',link:'',note:''},{id:'e16',name:'🍽️ 最後一餐',time:'12:00',desc:'吃一頓道別首爾的午餐',address:'',link:'',note:''},{id:'e17',name:'🧳 整理行李退房',time:'14:00',desc:'把戰利品收拾好，辦理退房',address:'',link:'',note:''},{id:'e18',name:'🚌 出發仁川機場',time:'17:00',desc:'AREX機場快線約60分鐘',address:'서울 마포구 공항철도역',link:'',note:'⚠️ 回程是仁川機場！'},{id:'e19',name:'✈️ CI163 起飛',time:'20:05',desc:'首爾仁川 → 台灣桃園，約2.75小時',address:'인천국제공항',link:'',note:''}],
 ];
@@ -1391,7 +1502,7 @@ function setSyncUI(s, msg=''){
 async function saveCloud(){
   setSyncUI('syncing');
   try{
-    const data = {places, plan, expenses, checkItems, checkNextId, userName1, userName2, nid, ts: Date.now()};
+    const data = {places, plan, expenses, checkItems, checkNextId, userName1, userName2, nid, memos, ts: Date.now()};
     const r = await fetch(DB_PATH, {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
@@ -1427,6 +1538,7 @@ async function loadCloud(){
         checkNextId = d.checkNextId || 100;
         userName1 = d.userName1 || '';
         userName2 = d.userName2 || '';
+        memos = d.memos || {};
         nid = d.nid || 1000;
         lastSync = d.ts || 0;
         saveLocal();
@@ -1447,6 +1559,7 @@ async function loadCloud(){
       checkNextId = d.checkNextId || 100;
       userName1 = d.userName1 || '';
       userName2 = d.userName2 || '';
+      memos = d.memos || {};
       nid = d.nid || 1000;
       setSyncUI('error', '本機資料（無法連線）');
     } else {
@@ -1634,7 +1747,8 @@ function renderPlaces(){
       </div>` : ''}
       <div class="pcard-footer">
         <button class="pcard-nav-btn" onclick="openNav('${esc(p.address)}','${esc(p.name)}')">📍 導航</button>
-        <button class="pcard-add-btn" onclick="openAtd('${esc(p.id)}')">＋ 加行程</button>
+        <button class="pcard-add-btn" onclick="openMemo('${esc(p.id)}','${esc(p.name)}')">📝 備忘錄${(memos[p.id]&&(memos[p.id].text||memos[p.id].links?.length))?'<span style=\'background:var(--gold);color:#0A0A0F;border-radius:50%;width:7px;height:7px;display:inline-block;margin-left:4px;vertical-align:middle;\'></span>':''}</button>
+        <button class="pcard-add-btn" onclick="openAtd('${esc(p.id)}')">＋ 行程</button>
       </div>
     </div>`).join('');
 }
@@ -2347,6 +2461,90 @@ async function delExpense(id, dayIdx) {
 }
 
 // ════════════════════════════════════
+// MEMO
+// ════════════════════════════════════
+// memos = { placeId: { text: '', links: [{label,url}] } }
+let memos = {};
+let curMemoId = '';
+let curMemoName = '';
+
+function openMemo(placeId, placeName) {
+  curMemoId = placeId;
+  curMemoName = placeName;
+  const m = memos[placeId] || { text: '', links: [] };
+  document.getElementById('memo-place-name').textContent = placeName;
+  document.getElementById('memo-text').value = m.text || '';
+  renderMemoLinks(m.links || []);
+  document.getElementById('memo-overlay').classList.add('show');
+  setTimeout(() => document.getElementById('memo-text').focus(), 200);
+}
+
+function closeMemo() {
+  document.getElementById('memo-overlay').classList.remove('show');
+}
+
+function renderMemoLinks(links) {
+  const list = document.getElementById('memo-link-list');
+  if (!links || !links.length) {
+    list.innerHTML = '<div class="memo-empty">還沒有連結<br>點下方「＋ 新增連結」加入官網、訂票連結等</div>';
+    return;
+  }
+  list.innerHTML = links.map((lk, i) => `
+    <div class="memo-link-item">
+      <div class="memo-link-icon">${getLinkIcon(lk.url)}</div>
+      <div class="memo-link-info">
+        <div class="memo-link-label">${lk.label || '連結'}</div>
+        <div class="memo-link-url">${lk.url}</div>
+      </div>
+      <a class="memo-link-open" href="${lk.url}" target="_blank" rel="noopener">開啟</a>
+      <button style="background:var(--rust-dim);border:none;border-radius:8px;width:28px;height:28px;color:#E8856A;cursor:pointer;font-size:12px;flex-shrink:0;" onclick="delMemoLink(${i})">✕</button>
+    </div>`).join('');
+}
+
+function getLinkIcon(url) {
+  if (!url) return '🔗';
+  if (url.includes('instagram')) return '📸';
+  if (url.includes('youtube') || url.includes('youtu.be')) return '▶️';
+  if (url.includes('maps.google') || url.includes('naver.me')) return '📍';
+  if (url.includes('naver')) return '🗺️';
+  return '🔗';
+}
+
+function delMemoLink(idx) {
+  const m = memos[curMemoId] || { text: '', links: [] };
+  m.links.splice(idx, 1);
+  memos[curMemoId] = m;
+  renderMemoLinks(m.links);
+}
+
+function openAddLinkSheet() {
+  document.getElementById('fl-label').value = '';
+  document.getElementById('fl-url').value = '';
+  document.getElementById('ov-addlink').classList.add('show');
+}
+
+function saveLink() {
+  const url = document.getElementById('fl-url').value.trim();
+  if (!url) { alert('請填寫網址！'); return; }
+  const label = document.getElementById('fl-label').value.trim() || '連結';
+  const m = memos[curMemoId] || { text: '', links: [] };
+  if (!m.links) m.links = [];
+  m.links.push({ label, url });
+  memos[curMemoId] = m;
+  renderMemoLinks(m.links);
+  closeOv('ov-addlink');
+}
+
+async function saveMemo() {
+  const text = document.getElementById('memo-text').value;
+  const m = memos[curMemoId] || { text: '', links: [] };
+  memos[curMemoId] = { ...m, text };
+  closeMemo();
+  renderPlaces(); // refresh dot indicator
+  await saveCloud();
+}
+
+// ════════════════════════════════════
 // INIT
 // ════════════════════════════════════
 async function init(){
@@ -2391,6 +2589,7 @@ async function init(){
           checkNextId = d.checkNextId || checkNextId;
           userName1 = d.userName1 || userName1;
           userName2 = d.userName2 || userName2;
+          memos = d.memos || memos;
           nid = d.nid || nid;
           renderPlaces(); renderPlan();
           if(userName1 && userName2) renderExpense();
